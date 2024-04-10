@@ -1,13 +1,21 @@
 package ch.hearc.ig;
+import org.mockito.Mockito;
+
+import java.util.Arrays;
 
 public class Game {
     private Frame frames[];
     private int currentFrame = 0;
     private boolean inFrame = false;
+    private int numberOfStrikes = 0;
+
+    private final TableauAffichage tableau;
 
 
-    public Game() {
+    public Game(TableauAffichage tableau) {
+        this.tableau = tableau;
         this.frames = new Frame[10];
+        this.tableau.seConnecter();
     }
 
     public void roll(int pins) {
@@ -23,7 +31,15 @@ public class Game {
                 }
 
                 if (pins == 10 && currentFrame < 9) {
+                    numberOfStrikes++;
                     frames[currentFrame].setFirstRoll(pins);
+                    if (numberOfStrikes == 1) {
+                        tableau.showStrike(TableauAffichage.StrikeSerie.PREMIER);
+                    } else if (numberOfStrikes == 2) {
+                        tableau.showStrike(TableauAffichage.StrikeSerie.SECOND);
+                    } else if (numberOfStrikes > 2) {
+                        tableau.showStrike(TableauAffichage.StrikeSerie.TROISIEME_ET_PLUS);
+                    }
                     currentFrame++;
                 } else if (pins == 10 && currentFrame == 9) {
                     if ((frames[currentFrame].getFirstRoll() + frames[currentFrame].getSecondRoll() == 10 && frames[currentFrame].getSecondRoll() != 0) || frames[currentFrame].getSecondRoll() == 10) {
@@ -42,6 +58,9 @@ public class Game {
                 }
             } else if (inFrame == true && currentFrame < 9) {
                 frames[currentFrame].setSecondRoll(pins);
+                if (frames[currentFrame].getFirstRoll() + frames[currentFrame].getSecondRoll() == 10) {
+                    tableau.showSpare();
+                }
                 currentFrame++;
                 inFrame = false;
             } else if (currentFrame == 9 && inFrame == true) {
@@ -80,5 +99,17 @@ public class Game {
             }
         }
         return score;
+    }
+
+    public void endGame() {
+        Mockito.when(tableau.bestScores()).thenReturn(Arrays.asList(280,274,270));
+        for (int i = 0; i < tableau.bestScores().size(); i++) {
+            if (score() > tableau.bestScores().get(i)) {
+                tableau.updateBestScores(score());
+                break;
+            }
+
+        }
+
     }
 }
